@@ -6,5 +6,5 @@
 //
 
 // Test that header file is self-contained.
-#include "../../example/server-framework/http_base.hpp"
+#include "example/server-framework/http_base.hpp"
 

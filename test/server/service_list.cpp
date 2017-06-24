@@ -6,5 +6,5 @@
 //
 
 // Test that header file is self-contained.
-#include "../../example/server-framework/service_list.hpp"
+#include "example/server-framework/service_list.hpp"
 

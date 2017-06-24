@@ -8,13 +8,12 @@
 #ifndef BEAST_EXAMPLE_SERVER_HTTP_ASYNC_PORT_HPP
 #define BEAST_EXAMPLE_SERVER_HTTP_ASYNC_PORT_HPP
 
-#include "server.hpp"
-
 #include "http_base.hpp"
+#include "server.hpp"
 #include "service_list.hpp"
 
-#include "../common/rfc7231.hpp"
-#include "../common/write_msg.hpp"
+#include "example/common/rfc7231.hpp"
+#include "example/common/write_msg.hpp"
 
 #include <beast/core/flat_buffer.hpp>
 #include <beast/http/dynamic_body.hpp>

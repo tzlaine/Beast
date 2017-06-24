@@ -6,5 +6,5 @@
 //
 
 // Test that header file is self-contained.
-#include "../../example/common/detect_ssl.hpp"
+#include "example/common/detect_ssl.hpp"
 

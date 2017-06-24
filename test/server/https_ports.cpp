@@ -8,6 +8,6 @@
 #if BEAST_USE_OPENSSL
 
 // Test that header file is self-contained.
-#include "../../example/server-framework/https_ports.hpp"
+#include "example/server-framework/https_ports.hpp"
 
 #endif

@@ -10,6 +10,7 @@
 
 #include <beast/core/string.hpp>
 #include <beast/http/message.hpp>
+#include <beast/http/rfc7230.hpp>
 
 namespace rfc7231 {
 
@@ -32,6 +33,22 @@ is_expect_100_continue(beast::http::request<
 {
     return beast::iequals(
         req[beast::http::field::expect], "100-continue");
+}
+
+/** Returns `true` if the message indicates a keep-alive.
+*/
+template<bool isRequest, class Body, class Allocator>
+bool
+is_keep_alive(beast::http::message<isRequest,
+    Body, beast::http::basic_fields<Allocator>> const& msg)
+{
+    if(msg.version >= 11)
+        return ! beast::http::token_list{
+            msg[beast::http::field::connection]}.exists(
+                "close");
+    return beast::http::token_list{
+        msg[beast::http::field::connection]}.exists(
+            "keep-alive");
 }
 
 } // rfc7231

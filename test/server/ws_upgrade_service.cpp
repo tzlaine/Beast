@@ -6,5 +6,5 @@
 //
 
 // Test that header file is self-contained.
-#include "../../example/server-framework/ws_upgrade_service.hpp"
+#include "example/server-framework/ws_upgrade_service.hpp"
 

@@ -9,12 +9,11 @@
 #define BEAST_EXAMPLE_SERVER_HTTP_SYNC_PORT_HPP
 
 #include "server.hpp"
-
 #include "http_base.hpp"
 #include "service_list.hpp"
 
-#include "../common/rfc7231.hpp"
-#include "../common/write_msg.hpp"
+#include "example/common/rfc7231.hpp"
+#include "example/common/write_msg.hpp"
 
 #include <beast/core/flat_buffer.hpp>
 #include <beast/core/handler_ptr.hpp>

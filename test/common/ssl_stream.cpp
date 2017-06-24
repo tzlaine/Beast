@@ -8,6 +8,6 @@
 #if BEAST_USE_OPENSSL
 
 // Test that header file is self-contained.
-#include "../../example/common/ssl_stream.hpp"
+#include "example/common/ssl_stream.hpp"
 
 #endif

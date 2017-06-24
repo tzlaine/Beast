@@ -9,9 +9,11 @@ add_executable (common-test
     ${BEAST_INCLUDES}
     ${COMMON_INCLUDES}
     detect_ssl.cpp
+    fields_alloc.cpp
     file_body.cpp
     mime_types.cpp
     rfc7231.cpp
+    session_alloc.cpp
     ssl_stream.cpp
     write_msg.cpp
     main.cpp

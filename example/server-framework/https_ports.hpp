@@ -11,7 +11,7 @@
 #include "http_sync_port.hpp"
 #include "http_async_port.hpp"
 
-#include "../common/ssl_stream.hpp"
+#include "example/common/ssl_stream.hpp"
 
 #include <boost/asio/ssl.hpp>
 

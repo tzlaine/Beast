@@ -2,10 +2,7 @@
 
 GroupSources(extras/beast extras)
 GroupSources(include/beast beast)
-
 GroupSources(test/websocket "/")
-
-#include_directories(../../example/)
 
 add_executable (websocket-tests
     ${BEAST_INCLUDES}

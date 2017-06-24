@@ -6,5 +6,5 @@
 //
 
 // Test that header file is self-contained.
-#include "../../example/server-framework/ws_async_port.hpp"
+#include "example/server-framework/ws_async_port.hpp"
 

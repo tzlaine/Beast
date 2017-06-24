@@ -6,5 +6,5 @@
 //
 
 // Test that header file is self-contained.
-#include "../../example/common/mime_types.hpp"
+#include "example/common/mime_types.hpp"
 

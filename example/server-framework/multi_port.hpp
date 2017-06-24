@@ -13,7 +13,7 @@
 #include "https_ports.hpp"
 #include "wss_ports.hpp"
 
-#include "../common/detect_ssl.hpp"
+#include "example/common/detect_ssl.hpp"
 
 #include <beast/core.hpp>
 

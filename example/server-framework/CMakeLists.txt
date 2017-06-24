@@ -1,9 +1,8 @@
 # Part of Beast
 
 GroupSources(include/beast beast)
-
+GroupSources(example/common common)
 GroupSources(example/server-framework "/")
-GroupSources(example/common "common")
 
 file(GLOB_RECURSE SERVER_INCLUDES
     ${PROJECT_SOURCE_DIR}/example/server-framework/*.hpp

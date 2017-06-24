@@ -9,8 +9,8 @@
 #define BEAST_EXAMPLE_SERVER_FILE_SERVICE_HPP
 
 #include "framework.hpp"
-#include "../common/file_body.hpp"
-#include "../common/mime_types.hpp"
+#include "example/common/file_body.hpp"
+#include "example/common/mime_types.hpp"
 
 #include <beast/core/string.hpp>
 #include <beast/http/empty_body.hpp>

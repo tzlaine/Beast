@@ -5,7 +5,11 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#include "fields_alloc.hpp"
+#include "example/common/file_body.hpp"
+#include "example/common/mime_types.hpp"
+#include "example/common/rfc7231.hpp"
+#include "example/common/session_alloc.hpp"
+#include "example/common/write_msg.hpp"
 
 #include "../common/mime_types.hpp"
 
@@ -36,7 +40,6 @@ public:
         acceptor_(acceptor),
         doc_root_(doc_root),
         socket_(acceptor.get_io_service()),
-        alloc_(8192),
         request_deadline_(acceptor.get_io_service(),
             std::chrono::steady_clock::time_point::max())
     {
@@ -49,7 +52,10 @@ public:
     }
 
 private:
+    using alloc_type = session_alloc<char>;
     using request_body_t = http::basic_dynamic_body<beast::static_buffer_n<1024 * 1024>>;
+    using parser_type = http::request_parser<request_body_t, alloc_type>;
+    using request_type = typename parser_type::value_type;
 
     // The acceptor used to listen for incoming connections.
     tcp::acceptor& acceptor_;
@@ -63,21 +69,16 @@ private:
     // The buffer for performing reads
     beast::static_buffer_n<8192> buffer_;
 
-    // The parser for reading the requests
-    using alloc_type = fields_alloc<char>;
     alloc_type alloc_;
-    boost::optional<http::request_parser<request_body_t, alloc_type>> parser_;
+
+    // The parser for reading the requests
+    boost::optional<parser_type> parser_;
 
     // The timer putting a time limit on requests.
     boost::asio::basic_waitable_timer<std::chrono::steady_clock> request_deadline_;
 
-    // The response message.
-    http::response<http::string_body> response_;
-
-    // The response serializer.
-    boost::optional<http::response_serializer<http::string_body>> serializer_;
-
-    void accept()
+    void
+    accept()
     {
         // Clean up any previous connection.
         beast::error_code ec;
@@ -103,7 +104,15 @@ private:
             });
     }
 
-    void read_header()
+    void
+    fail(beast::error_code const& ec)
+    {
+beast::unit_test::dstream dout{std::cout};
+dout << "error: " << ec.message() << std::endl;
+    }
+
+    void
+    read_header()
     {
         // On each read the parser needs to be destroyed and
         // recreated. We store it in a boost::optional to
@@ -125,13 +134,15 @@ private:
             socket_,
             buffer_,
             *parser_,
-            [this](beast::error_code ec)
+            alloc_.wrap([this](beast::error_code ec)
             {
+                if(ec && ec != http::error::end_of_stream)
+                    fail(ec);
                 if (ec)
                     accept();
                 else
                     read_body();
-            });
+            }));
     }
 
     void read_body()
@@ -140,64 +151,79 @@ private:
             socket_,
             buffer_,
             *parser_,
-            [this](beast::error_code ec)
+            alloc_.wrap([this](beast::error_code ec)
             {
                 if (ec)
-                    accept();
-                else
-                    process_request(parser_->get());
-            });
+                    return accept();
+                process_request(parser_->get());
+            }));
     }
 
-    void process_request(http::request<request_body_t, http::basic_fields<alloc_type>> const& req)
+    template<bool isRequest, class Body, class Fields>
+    void
+    send(http::message<isRequest, Body, Fields>&& msg)
     {
-        response_.version = 11;
-        response_.set(http::field::connection, "close");
+        if(rfc7231::is_keep_alive(msg))
+            read_header();
+        async_write_msg(socket_, std::move(msg), alloc_.wrap(
+            [this](beast::error_code ec)
+            {
+                if(ec)
+                {
+                    if(ec == http::error::end_of_stream)
+                        socket_.shutdown(tcp::socket::shutdown_send, ec);
+                    return accept();
+                }
+            }));
+    }
 
+    void
+    process_request(request_type const& req)
+    {
         switch (req.method())
         {
         case http::verb::get:
-            response_.result(http::status::ok);
-            response_.set(http::field::server, "Beast");
-            load_file(req.target());
+        {
+            boost::filesystem::path path = doc_root_;
+            if(req.target() == "/")
+                path /= "index.html";
+            else
+                path /= req.target().to_string();
+            if(boost::filesystem::exists(path))
+            {
+                http::response<
+                    file_body,
+                    http::basic_fields<alloc_type>> res(path, alloc_);
+                res.version = req.version;
+                res.result(http::status::ok);
+                res.set(http::field::server, BEAST_VERSION_STRING);
+                res.set(http::field::content_type, mime_type(path));
+                res.prepare_payload();
+                send(std::move(res));
+            }
+            else
+            {
+                std::basic_string<char, std::char_traits<char>, alloc_type> s(alloc_);
+                s.append("File '");
+                s.append(req.target().data(), req.target().size());
+                s.append("' was not found");
+                send(make_error_response(req, http::status::bad_request, beast::string_view{s.data(), s.size()}));
+            }
             break;
+        }
 
         default:
-            // We return responses indicating an error if
-            // we do not recognize the request method.
-            response_.result(http::status::bad_request);
-            response_.set(http::field::content_type, "text/plain");
-            response_.body = "Invalid request-method '" + req.method_string().to_string() + "'";
-            response_.prepare_payload();
+        {
+            std::basic_string<char, std::char_traits<char>, alloc_type> s(alloc_);
+            s.append("Invalid request-method '");
+            auto const ms = req.method_string();
+            s.append(ms.data(), ms.size());
+            s.append("'");
+            send(make_error_response(req, http::status::bad_request, beast::string_view{s.data(), s.size()}));
             break;
         }
-
-        write_response();
-    }
-
-    void load_file(beast::string_view target)
-    {
-        // Request path must be absolute and not contain "..".
-        if (target.empty() || target[0] != '/' || target.find("..") != std::string::npos)
-        {
-            response_.result(http::status::not_found);
-            response_.set(http::field::content_type, "text/plain");
-            response_.body = "File not found\r\n";
-            return;
         }
-
-        std::string full_path = doc_root_;
-        full_path.append(target.data(), target.size());
-
-        // Open the file to send back.
-        std::ifstream is(full_path.c_str(), std::ios::in | std::ios::binary);
-        if (!is)
-        {
-            response_.result(http::status::not_found);
-            response_.set(http::field::content_type, "text/plain");
-            response_.body = "File not found\r\n";
-            return;
-        }
+<<<<<<< HEAD
 
         // Fill out the reply to be sent to the client.
         response_.set(http::field::content_type, mime_type(target.to_string()));
@@ -205,22 +231,27 @@ private:
         for (char buf[2048]; is.read(buf, sizeof(buf)).gcount() > 0;)
             response_.body.append(buf, static_cast<std::size_t>(is.gcount()));
         response_.prepare_payload();
+=======
+>>>>>>> 3cbdc059... [WIP] Add session_alloc to http-server-fast
     }
 
-    void write_response()
+    template<class Body, class Fields>
+    http::response<
+        http::basic_dynamic_body<beast::basic_multi_buffer<alloc_type>>,
+        http::basic_fields<alloc_type>>
+    make_error_response(http::request<Body, Fields> const& req,
+        http::status code, beast::string_view text)
     {
-        response_.set(http::field::content_length, response_.body.size());
-
-        serializer_.emplace(response_);
-
-        http::async_write(
-            socket_,
-            *serializer_,
-            [this](beast::error_code ec)
-            {
-                socket_.shutdown(tcp::socket::shutdown_send, ec);
-                accept();
-            });
+        http::response<
+            http::basic_dynamic_body<beast::basic_multi_buffer<alloc_type>>,
+            http::basic_fields<alloc_type>> res{alloc_, alloc_};
+        res.version = req.version;
+        res.result(code);
+        res.set(http::field::server, BEAST_VERSION_STRING);
+        res.set(http::field::content_type, "text/plain");
+        beast::ostream(res.body) << text;
+        res.prepare_payload();
+        return res;
     }
 
     void check_deadline()

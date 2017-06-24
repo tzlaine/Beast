@@ -6,5 +6,5 @@
 //
 
 // Test that header file is self-contained.
-#include "example/server-framework/file_service.hpp"
+#include "example/common/fields_alloc.hpp"
 

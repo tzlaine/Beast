@@ -6,5 +6,5 @@
 //
 
 // Test that header file is self-contained.
-#include "../../example/common/file_body.hpp"
+#include "example/common/file_body.hpp"
 
