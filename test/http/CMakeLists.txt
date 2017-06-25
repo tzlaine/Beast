@@ -31,6 +31,7 @@ add_executable (http-tests
     string_body.cpp
     string_view_body.cpp
     type_traits.cpp
+    uri.cpp
     verb.cpp
     write.cpp
 )
