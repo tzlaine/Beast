@@ -1031,10 +1031,7 @@ protected:
             error_code& ec)
     {
     /*
-        hier-part       = "//" authority path-abempty
-                        / path-absolute
-                        / path-rootless
-                        / path-empty
+        hier-part       = "//" authority path-abempty / path-absolute / path-rootless / path-empty
 
         path            = path-abempty    ; begins with "/" or is empty
                         / path-absolute   ; begins with "/" but not "//"
@@ -1043,7 +1040,6 @@ protected:
 
         path-abempty    = *( "/" segment )
         path-absolute   = "/" [ segment-nz *( "/" segment ) ]
-        path-noscheme   = segment-nz-nc *( "/" segment )
         path-rootless   = segment-nz *( "/" segment )
         path-empty      = 0<pchar>
 
