@@ -293,6 +293,10 @@ protected:
     {
     }
 
+/*
+    https://url.spec.whatwg.org/
+*/
+
     // append a char to the current string
     void
     append(char c)
@@ -1047,11 +1051,6 @@ protected:
         segment-nz      = 1*pchar
         segment-nz-nc   = 1*( unreserved / pct-encoded / sub-delims / "@" )
                           ; non-zero-length segment without any colon ":"
-
-        https://tools.ietf.org/html/rfc3986#section-3.2
-        The authority component is preceded by a double slash ("//") and is
-        terminated by the next slash ("/"), question mark ("?"), or number
-        sign ("#") character, or by the end of the URI.
     */
         if(! expect('/', in, last, ec))
             return;
@@ -1060,12 +1059,43 @@ protected:
         parse_authority(in, last, ec);
         if(ec)
             return;
-        if(in >= last)
-        {
-            // path-empty
-            return;
-        }
+    /*
+        https://tools.ietf.org/html/rfc3986#section-3.2
+        The authority component is preceded by a double slash ("//") and is
+        terminated by the next slash ("/"), question mark ("?"), or number
+        sign ("#") character, or by the end of the URI.
 
+        https://tools.ietf.org/html/rfc3986#section-3.3
+        If a URI contains an authority component, then the path component
+        must either be empty or begin with a slash ("/") character.  If a URI
+        does not contain an authority component, then the path cannot begin
+        with two slash characters ("//").
+    */
+        if(! authority_.empty())
+        {
+            if(in + 1 <= last && *in != '/')
+            {
+                // expected '/'
+                ec = uri::error::syntax;
+                return;
+            }
+            if(in + 1 > last)
+            {
+                // path-empty
+                return;
+            }
+
+        }
+        else
+        {
+            if(in + 2 <= last &&
+                in[0] == '/' && in[1] == '/')
+            {
+                // can't start with "//"
+                ec = uri::error::syntax;
+                return;
+            }
+        }
     }
 
     //--------------------------------------------------------------------------
