@@ -287,7 +287,8 @@ operator()(error_code ec,
                 d.ws.wr_block_ = nullptr;
             // Allow outgoing control frames to
             // be sent in between message frames:
-            if(d.ws.rd_op_.maybe_invoke() ||
+            if( d.ws.close_op_.maybe_invoke() ||
+                d.ws.rd_op_.maybe_invoke() ||
                 d.ws.ping_op_.maybe_invoke())
             {
                 d.step = do_maybe_suspend;
@@ -392,7 +393,8 @@ operator()(error_code ec,
             d.ws.wr_block_ = nullptr;
             // Allow outgoing control frames to
             // be sent in between message frames:
-            if(d.ws.rd_op_.maybe_invoke() ||
+            if( d.ws.close_op_.maybe_invoke() ||
+                d.ws.rd_op_.maybe_invoke() ||
                 d.ws.ping_op_.maybe_invoke())
             {
                 d.step = do_maybe_suspend;
@@ -465,7 +467,8 @@ operator()(error_code ec,
             d.ws.wr_block_ = nullptr;
             // Allow outgoing control frames to
             // be sent in between message frames:
-            if(d.ws.rd_op_.maybe_invoke() ||
+            if( d.ws.close_op_.maybe_invoke() ||
+                d.ws.rd_op_.maybe_invoke() ||
                 d.ws.ping_op_.maybe_invoke())
             {
                 d.step = do_maybe_suspend;
@@ -542,7 +545,8 @@ operator()(error_code ec,
 upcall:
     if(d.ws.wr_block_ == &d)
         d.ws.wr_block_ = nullptr;
-    d.ws.rd_op_.maybe_invoke() ||
+    d.ws.close_op_.maybe_invoke() ||
+        d.ws.rd_op_.maybe_invoke() ||
         d.ws.ping_op_.maybe_invoke();
     d_.invoke(ec);
 }

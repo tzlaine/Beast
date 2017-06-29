@@ -4,6 +4,10 @@ Version 71:
 * Fine tune websocket op asserts
 * Refactor websocket composed ops
 
+WebSocket:
+
+* Allow close, ping, and write to happen concurrently
+
 --------------------------------------------------------------------------------
 
 Version 70:
