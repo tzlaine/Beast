@@ -3,6 +3,7 @@ Version 71:
 * Documentation revision
 * Fine tune websocket op asserts
 * Refactor websocket composed ops
+* Fix race in websocket read op
 
 WebSocket:
 
