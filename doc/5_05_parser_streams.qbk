@@ -32,9 +32,9 @@ __message__ objects; user-defined parsers are also possible:
     ```
     /// An HTTP/1 parser for producing a message.
     template<
-        bool isRequest,         // `true` to parse an HTTP request
-        class Body,             // The Body type for the resulting message
-        class Fields = fields>  // The type of container representing the fields
+        bool isRequest,                         // `true` to parse an HTTP request
+        class Body,                             // The Body type for the resulting message
+        class Allocator = std::allocator<char>> // The type of allocator for the header
     class parser
         : public basic_parser<...>;
     ```
@@ -44,8 +44,8 @@ __message__ objects; user-defined parsers are also possible:
 ][
     ```
     /// An HTTP/1 parser for producing a request message.
-    template<class Body, class Fields = fields>
-    using request_parser = parser<true, Body, Fields>;
+    template<class Body, class Allocator = std::allocator<char>>
+    using request_parser = parser<true, Body, Allocator>;
     ```
 ]]
 [[
@@ -53,8 +53,8 @@ __message__ objects; user-defined parsers are also possible:
 ][
     ```
     /// An HTTP/1 parser for producing a response message.
-    template<class Body, class Fields = fields>
-    using response_parser = parser<false, Body, Fields>;
+    template<class Body, class Allocator = std::allocator<char>>
+    using response_parser = parser<false, Body, Allocator>;
     ```
 ]]
 ]
