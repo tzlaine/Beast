@@ -32,17 +32,14 @@ class stream<NextLayer>::ping_op
 {
     struct data : op
     {
-        bool cont;
         stream<NextLayer>& ws;
         detail::frame_streambuf fb;
         int state = 0;
 
-        data(Handler& handler, stream<NextLayer>& ws_,
+        data(Handler&, stream<NextLayer>& ws_,
                 detail::opcode op_, ping_data const& payload)
             : ws(ws_)
         {
-            using boost::asio::asio_handler_is_continuation;
-            cont = asio_handler_is_continuation(std::addressof(handler));
             using boost::asio::buffer;
             using boost::asio::buffer_copy;
             ws.template write_ping<
@@ -62,7 +59,6 @@ public:
         : d_(std::forward<DeducedHandler>(h),
             ws, std::forward<Args>(args)...)
     {
-        (*this)(error_code{}, false);
     }
 
     void operator()()
@@ -72,7 +68,7 @@ public:
 
     void operator()(error_code ec, std::size_t);
 
-    void operator()(error_code ec, bool again = true);
+    void operator()(error_code ec);
 
     friend
     void* asio_handler_allocate(
@@ -95,7 +91,9 @@ public:
     friend
     bool asio_handler_is_continuation(ping_op* op)
     {
-        return op->d_->cont;
+        using boost::asio::asio_handler_is_continuation;
+        return asio_handler_is_continuation(
+            std::addressof(op->d_.handler()));
     }
 
     template<class Function>
@@ -125,10 +123,9 @@ template<class Handler>
 void
 stream<NextLayer>::
 ping_op<Handler>::
-operator()(error_code ec, bool again)
+operator()(error_code ec)
 {
     auto& d = *d_;
-    d.cont = d.cont || again;
     if(ec)
         goto upcall;
     for(;;)
@@ -213,7 +210,8 @@ async_ping(ping_data const& payload, WriteHandler&& handler)
     ping_op<handler_type<
         WriteHandler, void(error_code)>>{
             init.completion_handler, *this,
-                detail::opcode::ping, payload};
+                detail::opcode::ping, payload}(
+                    error_code{});
     return init.result.get();
 }
 
@@ -231,7 +229,8 @@ async_pong(ping_data const& payload, WriteHandler&& handler)
     ping_op<handler_type<
         WriteHandler, void(error_code)>>{
             init.completion_handler, *this,
-                detail::opcode::pong, payload};
+                detail::opcode::pong, payload}(
+                    error_code{});
     return init.result.get();
 }
 
