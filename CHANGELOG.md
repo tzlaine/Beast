@@ -1,6 +1,7 @@
 Version 71:
 
 * Documentation revision
+* Fine tune websocket op asserts
 
 --------------------------------------------------------------------------------
 
