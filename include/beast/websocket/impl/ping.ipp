@@ -115,6 +115,7 @@ operator()(error_code ec, std::size_t)
     auto& d = *d_;
     if(ec)
     {
+        BOOST_ASSERT(d.ws.wr_block_ == &d);
         d.ws.failed_ = true;
         goto upcall;
     }
@@ -128,16 +129,15 @@ operator()(error_code ec, std::size_t)
             d.ws.ping_op_.emplace(std::move(*this));
             return;
         }
+        d.ws.wr_block_ = &d;
         if(d.ws.failed_ || d.ws.wr_close_)
         {
             // call handler
-            d.state = 4;
             d.ws.get_io_service().post(
                 bind_handler(std::move(*this),
                     boost::asio::error::operation_aborted));
             return;
         }
-        d.ws.wr_block_ = &d;
 
     do_write:
         // send ping frame
@@ -171,7 +171,7 @@ operator()(error_code ec, std::size_t)
         goto do_write;
 
     case 3:
-        goto upcall;
+        break;
     }
 upcall:
     BOOST_ASSERT(d.ws.wr_block_ == &d);

@@ -114,6 +114,7 @@ operator()(error_code ec, std::size_t)
     auto& d = *d_;
     if(ec)
     {
+        BOOST_ASSERT(d.ws.wr_block_ == &d);
         d.ws.failed_ = true;
         goto upcall;
     }
@@ -123,10 +124,11 @@ operator()(error_code ec, std::size_t)
         if(d.ws.wr_block_)
         {
             // suspend
-            d.state = 2;
+            d.state = 1;
             d.ws.wr_op_.emplace(std::move(*this));
             return;
         }
+        d.ws.wr_block_ = &d;
         if(d.ws.failed_ || d.ws.wr_close_)
         {
             // call handler
@@ -135,7 +137,6 @@ operator()(error_code ec, std::size_t)
                     boost::asio::error::operation_aborted));
             return;
         }
-        d.ws.wr_block_ = &d;
 
     do_write:
         // send close frame
@@ -170,7 +171,7 @@ operator()(error_code ec, std::size_t)
         goto do_write;
 
     case 3:
-        goto upcall;
+        break;
     }
 upcall:
     BOOST_ASSERT(d.ws.wr_block_ == &d);
