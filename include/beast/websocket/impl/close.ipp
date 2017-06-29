@@ -177,7 +177,8 @@ upcall:
     BOOST_ASSERT(d.ws.wr_block_ == &d);
     d.ws.wr_block_ = nullptr;
     d.ws.rd_op_.maybe_invoke() ||
-        d.ws.ping_op_.maybe_invoke();
+        d.ws.ping_op_.maybe_invoke() ||
+        d.ws.wr_op_.maybe_invoke();
     d_.invoke(ec);
 }
 
@@ -219,6 +220,11 @@ close(close_reason const& cr, error_code& ec)
     static_assert(is_sync_stream<next_layer_type>::value,
         "SyncStream requirements not met");
     BOOST_ASSERT(! wr_close_);
+    if(wr_close_)
+    {
+        ec = boost::asio::error::operation_aborted;
+        return;
+    }
     wr_close_ = true;
     detail::frame_streambuf fb;
     write_close<static_buffer>(fb, cr);
