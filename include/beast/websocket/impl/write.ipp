@@ -70,12 +70,11 @@ public:
         : d_(std::forward<DeducedHandler>(h),
             ws, std::forward<Args>(args)...)
     {
-        (*this)(error_code{}, 0, false);
     }
 
     void operator()()
     {
-        (*this)(error_code{}, 0, true);
+        (*this)({}, 0, true);
     }
 
     void operator()(error_code const& ec)
@@ -84,10 +83,8 @@ public:
     }
 
     void operator()(error_code ec,
-        std::size_t bytes_transferred);
-
-    void operator()(error_code ec,
-        std::size_t bytes_transferred, bool again);
+        std::size_t bytes_transferred,
+            bool again = false);
 
     friend
     void* asio_handler_allocate(
@@ -128,19 +125,6 @@ template<class Buffers, class Handler>
 void
 stream<NextLayer>::
 write_frame_op<Buffers, Handler>::
-operator()(error_code ec, std::size_t bytes_transferred)
-{
-    auto& d = *d_;
-    if(ec)
-        d.ws.failed_ = true;
-    (*this)(ec, bytes_transferred, true);
-}
-
-template<class NextLayer>
-template<class Buffers, class Handler>
-void
-stream<NextLayer>::
-write_frame_op<Buffers, Handler>::
 operator()(error_code ec,
     std::size_t bytes_transferred, bool again)
 {
@@ -162,7 +146,11 @@ operator()(error_code ec,
     auto& d = *d_;
     d.cont = d.cont || again;
     if(ec)
+    {
+        BOOST_ASSERT(d.ws.wr_block_ == &d);
+        d.ws.failed_ = true;
         goto upcall;
+    }
     for(;;)
     {
         switch(d.step)
@@ -283,8 +271,8 @@ operator()(error_code ec,
                 bytes_transferred - d.fh_buf.size());
             d.fh_buf.consume(d.fh_buf.size());
             d.fh.op = detail::opcode::cont;
-            if(d.ws.wr_block_ == &d)
-                d.ws.wr_block_ = nullptr;
+            BOOST_ASSERT(d.ws.wr_block_ == &d);
+            d.ws.wr_block_ = nullptr;
             // Allow outgoing control frames to
             // be sent in between message frames:
             if( d.ws.close_op_.maybe_invoke() ||
@@ -905,7 +893,7 @@ async_write_frame(bool fin,
         void(error_code)> init{handler};
     write_frame_op<ConstBufferSequence, handler_type<
         WriteHandler, void(error_code)>>{init.completion_handler,
-            *this, fin, bs};
+            *this, fin, bs}({}, 0);
     return init.result.get();
 }
 
