@@ -1,3 +1,9 @@
+Version 71:
+
+* Documentation revision
+
+--------------------------------------------------------------------------------
+
 Version 70:
 
 * Serialize in one step when possible
