@@ -30,13 +30,13 @@ public:
     std::string path;
     std::string reason;
     std::string body;
-    bool got_on_begin       = false;
-    bool got_on_field       = false;
-    bool got_on_header      = false;
-    bool got_on_body        = false;
-    bool got_content_length = false;
-    bool got_on_chunk       = false;
-    bool got_on_complete    = false;
+    int got_on_begin       = 0;
+    int got_on_field       = 0;
+    int got_on_header      = 0;
+    int got_on_body        = 0;
+    int got_content_length = 0;
+    int got_on_chunk       = 0;
+    int got_on_complete    = 0;
 
     test_parser() = default;
 
@@ -55,7 +55,7 @@ public:
         path = std::string(
             path_.data(), path_.size());
         version = version_;
-        got_on_begin = true;
+        ++got_on_begin;
         if(fc_)
             fc_->fail(ec);
         else
@@ -71,7 +71,7 @@ public:
         reason = std::string(
             reason_.data(), reason_.size());
         version = version_;
-        got_on_begin = true;
+        ++got_on_begin;
         if(fc_)
             fc_->fail(ec);
         else
@@ -82,7 +82,7 @@ public:
     on_field(field, string_view,
         string_view, error_code& ec)
     {
-        got_on_field = true;
+        ++got_on_field;
         if(fc_)
             fc_->fail(ec);
         else
@@ -92,7 +92,7 @@ public:
     void
     on_header(error_code& ec)
     {
-        got_on_header = true;
+        ++got_on_header;
         if(fc_)
             fc_->fail(ec);
         else
@@ -104,7 +104,7 @@ public:
         std::uint64_t> const& content_length_,
             error_code& ec)
     {
-        got_on_body = true;
+        ++got_on_body;
         got_content_length =
             static_cast<bool>(content_length_);
         if(fc_)
@@ -128,7 +128,7 @@ public:
     on_chunk(std::uint64_t,
         string_view, error_code& ec)
     {
-        got_on_chunk = true;
+        ++got_on_chunk;
         if(fc_)
             fc_->fail(ec);
         else
@@ -138,7 +138,7 @@ public:
     void
     on_complete(error_code& ec)
     {
-        got_on_complete = true;
+        ++got_on_complete;
         if(fc_)
             fc_->fail(ec);
         else
